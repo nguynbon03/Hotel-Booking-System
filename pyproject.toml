@@ -1,0 +1,19 @@
+[project]
+name = "hotelbookingsystem"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.116.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlmodel>=0.0.24",
+    "alembic>=1.13.1", # hash password
+    "python-jose[cryptography]>=3.3.0", # JWT
+    "pydantic-settings>=2.2.1", # load config từ .env # validate email (nếu có đăng ký user)
+    "email-validator>=2.1.0",
+    "psycopg[binary]",
+    "python-multipart>=0.0.20",
+    "bcrypt==4.0.1",
+    "passlib[bcrypt]==1.7.4",
+]
