@@ -33,3 +33,8 @@ def decode_token(token: str) -> Dict[str, Any]:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError as exc:
         raise ValueError("Invalid token") from exc
+
+def create_verification_token(subject: str, expires_minutes: int = 60*24):
+    expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
+    payload = {"sub": str(subject), "exp": expire, "type": "verify_email"}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
