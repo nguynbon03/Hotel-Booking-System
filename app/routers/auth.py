@@ -22,24 +22,16 @@ def register(payload: RegisterIn, session: Session = Depends(get_session)):
     return user
 
 @router.post("/login", response_model=TokenPair)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_session)
-):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.email == form_data.username)).first()
 
     if not user or not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(401, "Invalid credentials")
 
     if not user.is_active:
-        raise HTTPException(status_code=403, detail="Inactive user")
+        raise HTTPException(403, "Inactive user")
 
-    # ✅ Tạo access token kèm role
-    access_token = create_access_token(
-        user_id=str(user.id),
-        role=user.role,  # 👈 thêm role vào payload JWT
-    )
-
+    access_token = create_access_token(str(user.id), user.role)
     refresh_token = create_refresh_token(str(user.id))
 
     return TokenPair(
@@ -52,16 +44,27 @@ def login(
 
 
 @router.post("/refresh", response_model=TokenPair)
-def refresh(payload: RefreshIn):
+def refresh(payload: RefreshIn, session: Session = Depends(get_session)):
     try:
         data = jwt.decode(payload.refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if data.get("scope") != "refresh":
             raise HTTPException(401, "Invalid scope")
     except JWTError:
         raise HTTPException(401, "Invalid token")
+
     uid = data["sub"]
-    return TokenPair(access_token=create_access_token(uid),
-                     refresh_token=create_refresh_token(uid))
+    user = session.exec(select(User).where(User.id == uid)).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    return TokenPair(
+        access_token=create_access_token(str(user.id), user.role),
+        refresh_token=create_refresh_token(str(user.id)),
+        role=user.role,
+        full_name=user.full_name,
+        email=user.email
+    )
+
 
 @router.post("/logout")
 def logout(refresh: RefreshIn):

@@ -1,9 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
 
 class Settings(BaseSettings):
     PROJECT_NAME: str
-
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
     SECRET_KEY: str
@@ -26,6 +24,12 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str
 
+    # 👇 Thêm 3 dòng này để khớp với .env
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
 
 settings = Settings()
