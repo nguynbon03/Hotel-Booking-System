@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 from typing import List
 from app.core.database import get_session
 from app.models.user import User
-from app.schemas.user import UserOut, UserCreate, UserUpdate
+from app.schemas.user import UserOut, UserCreate, UserUpdate,UserUpdateAdmin
 from app.utils.security import hash_password
 from app.utils.dependencies import get_current_superuser  # ✅ check quyền admin
 
@@ -62,7 +62,7 @@ def create_user(
 @router.patch("/users/{user_id}", response_model=UserOut)
 def update_user(
     user_id: str,
-    payload: UserUpdate,
+    payload: UserUpdateAdmin,
     session: Session = Depends(get_session),
     current_admin: User = Depends(get_current_superuser),
 ):

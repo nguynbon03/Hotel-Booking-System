@@ -19,9 +19,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ----------------------------
-# Routers
-# ----------------------------
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(rooms.router)
@@ -31,28 +28,28 @@ app.include_router(admin.router)
 app.include_router(chat.router)
 app.include_router(ai.router)
 
-# ----------------------------
-# Startup event
-# ----------------------------
+
 @app.on_event("startup")
 def on_startup():
     init_db()
     with Session(engine) as session:
-        # check if superuser exists
-        existing = session.exec(select(User).where(User.email == settings.SUPERUSER_EMAIL)).first()
+        existing = session.exec(
+            select(User).where(User.email == settings.SUPERUSER_EMAIL)
+        ).first()
+
         if not existing:
             admin_user = User(
                 email=settings.SUPERUSER_EMAIL,
                 password_hash=hash_password(settings.SUPERUSER_PASSWORD),
                 full_name="Administrator",
-                role=UserRole.ADMIN,
+                role=UserRole.ADMIN,   # ✅ Enum
                 is_active=True,
                 phone="0123456789",
-
             )
             session.add(admin_user)
             session.commit()
             logger.info(f"✅ Created default superuser: {settings.SUPERUSER_EMAIL}")
         else:
             logger.info("✅ Superuser already exists, skip seeding.")
+
     logger.info("✅ App started and DB initialized")
