@@ -7,6 +7,20 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
+    environment:
+      # Email Configuration from .env
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_STARTTLS=${MAIL_STARTTLS}
+      - MAIL_SSL_TLS=${MAIL_SSL_TLS}
+      # Database
+      - DATABASE_URL=postgresql+psycopg2://postgres:nguyndz123@postgres:5432/HotelBookingSystemFinal
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=your-super-secret-key-change-this-in-production
     env_file:
       - .env
     depends_on:
@@ -14,6 +28,50 @@ services:
       - postgres
     volumes:
       - .:/app
+    networks:
+      - backend
+
+  # Celery Worker for background tasks
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    environment:
+      # Email Configuration from .env
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_STARTTLS=${MAIL_STARTTLS}
+      - MAIL_SSL_TLS=${MAIL_SSL_TLS}
+      # Database
+      - DATABASE_URL=postgresql+psycopg2://postgres:nguyndz123@postgres:5432/HotelBookingSystemFinal
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=your-super-secret-key-change-this-in-production
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - .:/app
+    networks:
+      - backend
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hotel_frontend
+    environment:
+      - VITE_API_URL=http://localhost:3000/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - fastapi
     networks:
       - backend
 
@@ -28,12 +86,10 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
-    env_file:
-      - .env             # <--- BẮT BUỘC THÊM DÒNG NÀY
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nguyndz123
+      POSTGRES_DB: HotelBookingSystemFinal
     ports:
       - "5433:5432"
     volumes:

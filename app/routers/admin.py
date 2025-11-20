@@ -1,11 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List
+from datetime import date, datetime, timedelta
 from app.core.database import get_session
 from app.models.user import User
-from app.schemas.user import UserOut, UserCreate, UserUpdate,UserUpdateAdmin
+from app.schemas.user import UserOut, UserCreate, UserUpdate, UserUpdateAdmin
 from app.utils.security import hash_password
 from app.utils.dependencies import get_current_superuser  # ✅ check quyền admin
+from app.models.payment import Payment
+from app.models.booking import Booking
+from app.models.room import Room
+from app.utils.enums import BookingStatus
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -86,7 +91,6 @@ def update_user(
     return user
 
 
-
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     user_id: str,
@@ -101,3 +105,75 @@ def delete_user(
     session.delete(user)
     session.commit()
     return {"detail": "User deleted successfully"}
+
+
+# ============================================================
+# 📊 Admin Analytics
+# ============================================================
+
+@router.get("/analytics/overview")
+def analytics_overview(
+    session: Session = Depends(get_session),
+    current_admin: User = Depends(get_current_superuser),
+):
+    """
+    Return an overview of key business metrics:
+    - total_revenue_today: sum of payments made today.
+    - cancellation_rate: percentage of bookings that have been cancelled.
+    """
+    today = date.today()
+    # Payments created between start of today and start of tomorrow
+    start = datetime.combine(today, datetime.min.time())
+    end = start + timedelta(days=1)
+    payments_today = session.exec(
+        select(Payment).where(Payment.created_at >= start, Payment.created_at < end)
+    ).all()
+    total_revenue_today = sum(p.amount for p in payments_today)
+
+    bookings = session.exec(select(Booking)).all()
+    total_bookings = len(bookings)
+    cancelled_count = sum(1 for b in bookings if b.status == BookingStatus.CANCELLED)
+    cancellation_rate = (cancelled_count / total_bookings) if total_bookings else 0.0
+
+    return {
+        "total_revenue_today": total_revenue_today,
+        "cancellation_rate": cancellation_rate,
+    }
+
+
+@router.get("/analytics/revenue")
+def analytics_revenue(
+    from_date: date,
+    to_date: date,
+    session: Session = Depends(get_session),
+    current_admin: User = Depends(get_current_superuser),
+):
+    """
+    Return revenue aggregated between two dates and broken down by day.
+
+    Query parameters:
+    - from_date: start date (inclusive)
+    - to_date: end date (inclusive)
+    """
+    if from_date > to_date:
+        raise HTTPException(status_code=400, detail="from_date must be before to_date")
+
+    start = datetime.combine(from_date, datetime.min.time())
+    end = datetime.combine(to_date + timedelta(days=1), datetime.min.time())
+    payments = session.exec(
+        select(Payment).where(Payment.created_at >= start, Payment.created_at < end)
+    ).all()
+
+    total_revenue = sum(p.amount for p in payments)
+    revenue_by_day: dict[date, float] = {}
+    for p in payments:
+        d = p.created_at.date()
+        revenue_by_day[d] = revenue_by_day.get(d, 0.0) + p.amount
+
+    # Convert keys to ISO format strings for JSON serialization
+    revenue_by_day_str = {d.isoformat(): amt for d, amt in revenue_by_day.items()}
+
+    return {
+        "total_revenue": total_revenue,
+        "revenue_by_day": revenue_by_day_str,
+    }

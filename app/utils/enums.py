@@ -10,6 +10,18 @@ class UserRole(str, Enum):
 
 
 # -----------------------------
+# ORGANIZATION ROLE (MULTI-TENANCY)
+# -----------------------------
+class OrganizationRole(str, Enum):
+    """Roles within an organization for multi-tenancy."""
+    OWNER = "OWNER"           # Full control, billing access
+    ADMIN = "ADMIN"           # Full operational control, no billing
+    MANAGER = "MANAGER"       # Property and booking management
+    STAFF = "STAFF"           # Basic booking operations
+    MEMBER = "MEMBER"         # Read-only access
+
+
+# -----------------------------
 # Booking Status (KHÔNG ĐỤNG TỚI)
 # -----------------------------
 class BookingStatus:

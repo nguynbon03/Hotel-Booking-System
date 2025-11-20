@@ -24,10 +24,12 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str
 
-    # 👇 Thêm 3 dòng này để khớp với .env
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+
+    # ⭐ THÊM MỚI
+    FRONTEND_URL: str  # ví dụ http://localhost:3000 hoặc domain chính thức
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
