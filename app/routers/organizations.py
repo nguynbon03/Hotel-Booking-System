@@ -17,11 +17,13 @@ from app.core.database import get_session
 from app.utils.dependencies import get_current_user, get_active_user
 from app.models.user import User
 from app.models.organization import (
-    Organization, 
-    OrganizationMember, 
+    Organization,
+    OrganizationMember,
     OrganizationInvitation,
     SubscriptionPlan,
-    OrganizationStatus
+    OrganizationStatus,
+    OrganizationRole,
+    InvitationStatus,
 )
 from app.models.property import Property
 from app.models.booking import Booking
@@ -41,6 +43,7 @@ from app.schemas.organization import (
 )
 from app.services.task_queue import enqueue_email
 from app.core.config import settings
+from app.utils.enums import BookingStatus
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
@@ -87,7 +90,7 @@ def create_organization(
     member = OrganizationMember(
         organization_id=org.id,
         user_id=current_user.id,
-        role="OWNER",
+        role=OrganizationRole.OWNER,
         can_manage_properties=True,
         can_manage_bookings=True,
         can_manage_users=True,
@@ -267,9 +270,12 @@ def update_member_permissions(
         raise HTTPException(status_code=404, detail="Member not found")
     
     # Prevent self-demotion from owner
-    if (target_member.user_id == current_user.id and 
-        target_member.role == "OWNER" and 
-        payload.role and payload.role != "OWNER"):
+    if (
+        target_member.user_id == current_user.id
+        and target_member.role == OrganizationRole.OWNER
+        and payload.role
+        and payload.role != OrganizationRole.OWNER
+    ):
         raise HTTPException(
             status_code=400, 
             detail="Cannot demote yourself from owner role"
@@ -306,12 +312,12 @@ def remove_member(
         raise HTTPException(status_code=404, detail="Member not found")
     
     # Prevent removing the last owner
-    if target_member.role == "OWNER":
+    if target_member.role == OrganizationRole.OWNER:
         owner_count = session.exec(
             select(OrganizationMember).where(
                 and_(
                     OrganizationMember.organization_id == org_id,
-                    OrganizationMember.role == "OWNER",
+                    OrganizationMember.role == OrganizationRole.OWNER,
                     OrganizationMember.is_active == True
                 )
             )
@@ -370,7 +376,7 @@ def invite_user(
             and_(
                 OrganizationInvitation.organization_id == org_id,
                 OrganizationInvitation.email == payload.email,
-                OrganizationInvitation.status == "PENDING"
+                OrganizationInvitation.status == InvitationStatus.PENDING
             )
         )
     ).first()
@@ -471,7 +477,7 @@ def respond_to_invitation(
     if not invitation:
         raise HTTPException(status_code=404, detail="Invitation not found")
     
-    if invitation.status != "PENDING":
+    if invitation.status != InvitationStatus.PENDING:
         raise HTTPException(status_code=400, detail="Invitation already responded to")
     
     if invitation.expires_at < datetime.utcnow():
@@ -484,7 +490,9 @@ def respond_to_invitation(
         )
     
     # Update invitation status
-    invitation.status = "ACCEPTED" if payload.action == "accept" else "DECLINED"
+    invitation.status = (
+        InvitationStatus.ACCEPTED if payload.action == "accept" else InvitationStatus.DECLINED
+    )
     invitation.responded_at = datetime.utcnow()
     session.add(invitation)
     
@@ -545,7 +553,13 @@ def get_organization_stats(
     total_revenue = sum(b.total_amount for b in bookings)
     
     # Active bookings
-    active_bookings = len([b for b in bookings if b.status in ["PENDING", "CONFIRMED"]])
+    active_bookings = len(
+        [
+            b
+            for b in bookings
+            if b.status in [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+        ]
+    )
     
     # Occupancy rate (simplified calculation)
     occupancy_rate = 0.0  # Would need more complex calculation
@@ -634,7 +648,7 @@ def get_organization_and_check_permission(
     # Check specific permission
     if required_permission and not getattr(member, required_permission, False):
         # Owners and admins have all permissions
-        if member.role not in ["OWNER", "ADMIN"]:
+        if member.role not in [OrganizationRole.OWNER, OrganizationRole.ADMIN]:
             raise HTTPException(
                 status_code=403, 
                 detail=f"Insufficient permissions: {required_permission} required"

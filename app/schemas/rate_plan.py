@@ -1,33 +1,53 @@
-"""
-Pydantic schemas for RatePlan resources.
-
-``RatePlanCreate`` defines the data required to create a new rate plan.
-The property_id and room_type_id are passed via the path parameters in
-the API and thus omitted from the body.  ``RatePlanOut`` is used to
-represent a rate plan in responses.
-"""
-
 from __future__ import annotations
-
 import uuid
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 
-class RatePlanCreate(BaseModel):
+class RatePlanBase(BaseModel):
     name: str
-    currency: str = "USD"
     base_price: float
-    is_refundable: bool = True
-    cancellation_policy: Optional[str] = None
+    currency: str = "VND"
+
+    min_days_before_checkin: Optional[int] = None
+    max_days_before_checkin: Optional[int] = None
+    min_nights: Optional[int] = None
+    max_nights: Optional[int] = None
+    non_refundable: bool = False
+    includes_breakfast: bool = False
 
 
-class RatePlanOut(BaseModel):
-    id: uuid.UUID
+class RatePlanCreate(RatePlanBase):
     property_id: uuid.UUID
     room_type_id: uuid.UUID
-    name: str
-    currency: str
-    base_price: float
-    is_refundable: bool
-    cancellation_policy: Optional[str]
+    cancellation_policy_id: Optional[uuid.UUID] = None
+
+
+class RatePlanUpdate(BaseModel):
+    name: Optional[str] = None
+    base_price: Optional[float] = None
+    currency: Optional[str] = None
+    min_days_before_checkin: Optional[int] = None
+    max_days_before_checkin: Optional[int] = None
+    min_nights: Optional[int] = None
+    max_nights: Optional[int] = None
+    non_refundable: Optional[bool] = None
+    includes_breakfast: Optional[bool] = None
+    cancellation_policy_id: Optional[uuid.UUID] = None
+
+
+class DailyPriceResponse(BaseModel):
+    id: uuid.UUID
+    date: str
+    price: float
+
+    class Config:
+        orm_mode = True
+
+
+class RatePlanResponse(RatePlanBase):
+    id: uuid.UUID
+    daily_prices: List[DailyPriceResponse] = []
+
+    class Config:
+        orm_mode = True

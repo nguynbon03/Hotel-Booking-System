@@ -1,14 +1,25 @@
-from sqlmodel import SQLModel, Field
-from datetime import datetime
+from __future__ import annotations
 import uuid
-from app.utils.enums import PaymentMethod, PaymentStatus
+from datetime import datetime
+from typing import Optional
+from sqlmodel import SQLModel, Field, Relationship
+
+from app.utils.enums import PaymentStatus
+
 
 class Payment(SQLModel, table=True):
     __tablename__ = "payments"
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    booking_id: uuid.UUID = Field(foreign_key="bookings.id", index=True)
+    booking_id: uuid.UUID = Field(foreign_key="bookings.id")
+
     amount: float
-    method: str = Field(default=PaymentMethod.CARD)
-    status: str = Field(default=PaymentStatus.INIT)
-    transaction_code: str
+    currency: str = Field(default="VND")
+    provider: str = Field(default="VNPAY")  # hoặc Stripe, Paypal, Momo...
+    transaction_id: Optional[str] = None
+
+    status: PaymentStatus = Field(default=PaymentStatus.PENDING)
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    booking: "Booking" = Relationship(back_populates="payments")

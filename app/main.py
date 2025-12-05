@@ -123,7 +123,7 @@ def create_app() -> FastAPI:
                     email=settings.SUPERUSER_EMAIL,
                     password_hash=hash_password(settings.SUPERUSER_PASSWORD),
                     full_name="Administrator",
-                    role=UserRole.ADMIN,
+                    role=UserRole.SUPER_ADMIN,
                     is_active=True,
                     phone="0123456789",
                 )

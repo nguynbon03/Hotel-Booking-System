@@ -1,27 +1,31 @@
-"""
-SQLModel definition for Rate plans.
-
-A ``RatePlan`` defines the pricing strategy for a particular room type and
-property.  Examples include flexible rates, non-refundable rates, or rates
-that include breakfast.  Each rate plan has a currency and a base price.
-More advanced pricing (e.g. per-date price) can be defined in the DailyPrice
-table.
-"""
-
 from __future__ import annotations
-
 import uuid
-from typing import Optional
-from sqlmodel import SQLModel, Field
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
 
 
 class RatePlan(SQLModel, table=True):
     __tablename__ = "rate_plans"
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     property_id: uuid.UUID = Field(foreign_key="properties.id")
     room_type_id: uuid.UUID = Field(foreign_key="room_types.id")
+
     name: str
-    currency: str = Field(default="USD")
-    base_price: float = Field(gt=0)
-    is_refundable: bool = Field(default=True)
-    cancellation_policy: Optional[str] = None
+    base_price: float
+    currency: str = Field(default="VND")
+
+    min_days_before_checkin: Optional[int] = None
+    max_days_before_checkin: Optional[int] = None
+
+    min_nights: Optional[int] = None
+    max_nights: Optional[int] = None
+
+    non_refundable: bool = Field(default=False)
+    includes_breakfast: bool = Field(default=False)
+
+    cancellation_policy_id: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="cancellation_policies.id"
+    )
+
+    daily_prices: List["DailyPrice"] = Relationship(back_populates="rate_plan")

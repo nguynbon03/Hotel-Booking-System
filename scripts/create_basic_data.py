@@ -14,8 +14,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlmodel import Session, select
 from app.core.database import engine
 from app.models.user import User
-from app.models.organization import Organization, OrganizationMember, SubscriptionPlan, OrganizationStatus
-from app.models.property import Property
+from app.models.organization import (
+    Organization,
+    OrganizationMember,
+    SubscriptionPlan,
+    OrganizationStatus,
+    OrganizationRole,
+)
+from app.models.property import Property, PropertyImage
 from app.utils.security import hash_password
 from app.utils.enums import UserRole
 
@@ -39,7 +45,7 @@ def create_basic_data():
                 email=admin_email,
                 full_name="Hotel Administrator",
                 phone="+1-555-ADMIN",
-                role=UserRole.ADMIN,
+                role=UserRole.SUPER_ADMIN,
                 password_hash=hash_password("admin123"),
                 is_active=True,
                 is_verified=True
@@ -68,7 +74,13 @@ def create_basic_data():
             max_properties=10,
             max_users=50,
             max_rooms_per_property=200,
-            features_enabled='["booking", "analytics", "multi_property", "staff_management", "customer_support"]',
+            features_enabled=[
+                "booking",
+                "analytics",
+                "multi_property",
+                "staff_management",
+                "customer_support",
+            ],
             owner_id=admin_user.id,
             is_active=True,
             primary_color="#3B82F6",
@@ -83,14 +95,12 @@ def create_basic_data():
         org_member = OrganizationMember(
             organization_id=organization.id,
             user_id=admin_user.id,
-            role="OWNER",
-            permissions={
-                "manage_properties": True,
-                "manage_bookings": True,
-                "manage_users": True,
-                "view_analytics": True,
-                "manage_billing": True
-            },
+            role=OrganizationRole.OWNER,
+            can_manage_properties=True,
+            can_manage_bookings=True,
+            can_manage_users=True,
+            can_view_analytics=True,
+            can_manage_billing=True,
             is_active=True
         )
         session.add(org_member)
@@ -98,6 +108,12 @@ def create_basic_data():
         print(f"✅ Created organization membership for admin")
         
         # Create main property
+        image_urls = [
+            "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
+            "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
+            "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80"
+        ]
+
         property_obj = Property(
             name="Grand Palace Hotel",
             description="Luxury hotel in the heart of the city featuring elegant rooms, world-class amenities, and exceptional service",
@@ -106,8 +122,8 @@ def create_basic_data():
             state="State",
             country="United States",
             postal_code="12345",
-            phone="+1-555-HOTEL",
-            email="reservations@grandpalacehotel.com",
+            contact_phone="+1-555-HOTEL",
+            contact_email="reservations@grandpalacehotel.com",
             website="https://grandpalacehotel.com",
             organization_id=organization.id,
             check_in_time="15:00",
@@ -116,30 +132,23 @@ def create_basic_data():
             tax_rate=0.10,
             service_fee=0.05,
             cancellation_policy="Free cancellation up to 24 hours before check-in",
-            amenities=[
-                "Free WiFi",
-                "Swimming Pool", 
-                "Fitness Center",
-                "Restaurant",
-                "Bar",
-                "Spa",
-                "Business Center",
-                "Concierge",
-                "Room Service",
-                "Valet Parking",
-                "Airport Shuttle",
-                "Pet Friendly"
-            ],
-            images=[
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-                "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
-                "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80"
-            ],
+            house_rules="No smoking inside rooms. Pets allowed upon request.",
+            main_image_url=image_urls[0],
             is_active=True
         )
         session.add(property_obj)
         session.commit()
         session.refresh(property_obj)
+
+        for idx, url in enumerate(image_urls):
+            session.add(
+                PropertyImage(
+                    property_id=property_obj.id,
+                    url=url,
+                    is_main=idx == 0,
+                )
+            )
+        session.commit()
         print(f"✅ Created property: {property_obj.name}")
         
         print(f"\n🎉 Basic data creation completed!")

@@ -1,53 +1,54 @@
-from typing import Optional
-from pydantic import BaseModel
-from datetime import datetime
+from __future__ import annotations
 import uuid
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr
 from app.utils.enums import UserRole
 
 
-# ============================================================
-# 📤 OUTPUT SCHEMA
-# ============================================================
-class UserOut(BaseModel):
+# ==========================
+# Base schema
+# ==========================
+class UserBase(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    role: UserRole = UserRole.CUSTOMER
+    timezone: str = "UTC"
+    language: str = "en"
+    avatar_url: Optional[str] = None
+
+
+# ==========================
+# Create schema
+# ==========================
+class UserCreate(UserBase):
+    password: str
+
+
+# ==========================
+# Update schema
+# ==========================
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    timezone: Optional[str] = None
+    language: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+# ==========================
+# Response schema
+# ==========================
+class UserResponse(UserBase):
     id: uuid.UUID
-    email: str
-    full_name: str
-    phone: str
-    role: UserRole        # 🔁 dùng Enum luôn, API trả về vẫn là "ADMIN" / "CUSTOMER"
+    role: UserRole
     is_active: bool
     email_verified: bool
     created_at: datetime
+    updated_at: datetime
 
     class Config:
-        from_attributes = True   # chuẩn cho Pydantic v2
-
-
-# ============================================================
-# ✏️ UPDATE SCHEMA
-# ============================================================
-class UserUpdate(BaseModel):
-    email: Optional[str] = None
-    password: Optional[str] = None
-    full_name: Optional[str] = None
-    phone: Optional[str] = None
-
-class UserUpdateAdmin(BaseModel):
-    email: Optional[str] = None
-    password: Optional[str] = None
-    full_name: Optional[str] = None
-    phone: Optional[str] = None
-    role: Optional[UserRole] = None     # ⭐ Admin được phép cập nhật role
-    is_active: Optional[bool] = None    # ⭐ Admin được phép bật/tắt tài khoản
-
-
-# ============================================================
-# 🧩 CREATE SCHEMA
-# ============================================================
-class UserCreate(BaseModel):
-    email: str
-    password: str
-    full_name: str
-    phone: str
-    # 👉 Dùng Enum, Pydantic tự convert từ string "ADMIN" / "CUSTOMER"
-    role: UserRole = UserRole.CUSTOMER
-    is_active: bool = True
+        orm_mode = True

@@ -1,40 +1,33 @@
-"""
-Pydantic schemas for Experience model.
-
-These schemas define the structure for API requests and responses
-related to property experiences.
-"""
-
-from pydantic import BaseModel, Field
-from typing import Optional
+from __future__ import annotations
 import uuid
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
 
 
 class ExperienceBase(BaseModel):
-    """Base schema for experience data."""
-    name: str = Field(..., description="Name of the experience")
-    description: Optional[str] = Field(None, description="Detailed description of the experience")
-    image_url: Optional[str] = Field(None, description="URL of the experience image")
-    is_active: bool = Field(True, description="Whether the experience is active")
+    name: str
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    is_active: bool = True
 
 
 class ExperienceCreate(ExperienceBase):
-    """Schema for creating a new experience."""
-    property_id: uuid.UUID = Field(..., description="ID of the property offering this experience")
+    property_id: uuid.UUID
 
 
 class ExperienceUpdate(BaseModel):
-    """Schema for updating an existing experience."""
-    name: Optional[str] = Field(None, description="Name of the experience")
-    description: Optional[str] = Field(None, description="Detailed description of the experience")
-    image_url: Optional[str] = Field(None, description="URL of the experience image")
-    is_active: Optional[bool] = Field(None, description="Whether the experience is active")
+    name: Optional[str] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
-class ExperienceOut(ExperienceBase):
-    """Schema for experience response data."""
-    id: uuid.UUID = Field(..., description="Unique identifier for the experience")
-    property_id: uuid.UUID = Field(..., description="ID of the property offering this experience")
+class ExperienceResponse(ExperienceBase):
+    id: uuid.UUID
+    property_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True

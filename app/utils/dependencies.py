@@ -57,8 +57,8 @@ def get_active_user(current_user: User = Depends(get_current_user)) -> User:
 
 
 def get_current_staff(current_user: User = Depends(get_active_user)) -> User:
-    # current_user.role là UserRole → so sánh trực tiếp
-    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN]:
+    # Staff, admin_org và admin tổng đều có thể truy cập các route staff
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Staff privileges required."
@@ -67,7 +67,7 @@ def get_current_staff(current_user: User = Depends(get_active_user)) -> User:
 
 
 def get_current_superuser(current_user: User = Depends(get_active_user)) -> User:
-    if current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to perform this action."

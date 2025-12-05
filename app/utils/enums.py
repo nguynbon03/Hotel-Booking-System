@@ -1,49 +1,86 @@
 from enum import Enum
 
-# -----------------------------
-# USER ROLE (CHỈ CÁI NÀY PHẢI DÙNG ENUM)
-# -----------------------------
+
 class UserRole(str, Enum):
-    CUSTOMER = "CUSTOMER"
-    ADMIN = "ADMIN"
-    STAFF = "STAFF"
+    SUPER_ADMIN = "SUPER_ADMIN"
+    ADMIN = "ADMIN"        # admin_org
+    STAFF = "STAFF"        # staff của property
+    CUSTOMER = "CUSTOMER"  # khách đặt phòng
 
 
-# -----------------------------
-# ORGANIZATION ROLE (MULTI-TENANCY)
-# -----------------------------
-class OrganizationRole(str, Enum):
-    """Roles within an organization for multi-tenancy."""
-    OWNER = "OWNER"           # Full control, billing access
-    ADMIN = "ADMIN"           # Full operational control, no billing
-    MANAGER = "MANAGER"       # Property and booking management
-    STAFF = "STAFF"           # Basic booking operations
-    MEMBER = "MEMBER"         # Read-only access
+class LocationType(str, Enum):
+    COUNTRY = "country"
+    PROVINCE = "province"
+    CITY = "city"
+    DISTRICT = "district"
 
 
-# -----------------------------
-# Booking Status (KHÔNG ĐỤNG TỚI)
-# -----------------------------
-class BookingStatus:
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
+class BookingStatus(str, Enum):
+    PENDING = "PENDING"
+    HOLD = "HOLD"
+    CONFIRMED = "CONFIRMED"
+    CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
 
 
-# -----------------------------
-# Payment Status (KHÔNG ĐỤNG TỚI)
-# -----------------------------
-class PaymentStatus:
-    INIT = "init"
-    SUCCESS = "success"
-    FAILED = "failed"
+class PaymentStatus(str, Enum):
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
 
 
-# -----------------------------
-# Payment Method (KHÔNG ĐỤNG TỚI)
-# -----------------------------
-class PaymentMethod:
-    CARD = "card"
-    BANK = "bank"
-    COD = "cod"
+class PropertyType(str, Enum):
+    HOTEL = "HOTEL"
+    APARTMENT = "APARTMENT"
+    HOSTEL = "HOSTEL"
+    VILLA = "VILLA"
+
+
+class SubscriptionPlan(str, Enum):
+    FREE = "FREE"
+    BASIC = "BASIC"
+    PROFESSIONAL = "PROFESSIONAL"
+    ENTERPRISE = "ENTERPRISE"
+
+
+class SubscriptionStatus(str, Enum):
+    TRIALING = "TRIALING"
+    ACTIVE = "ACTIVE"
+    PAST_DUE = "PAST_DUE"
+    CANCELED = "CANCELED"
+    INACTIVE = "INACTIVE"
+
+
+class BillingCycle(str, Enum):
+    MONTHLY = "MONTHLY"
+    YEARLY = "YEARLY"
+
+
+class InvoiceStatus(str, Enum):
+    DRAFT = "DRAFT"
+    OPEN = "OPEN"
+    PAID = "PAID"
+    VOID = "VOID"
+    OVERDUE = "OVERDUE"
+
+
+class InvitationStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    DECLINED = "DECLINED"
+    EXPIRED = "EXPIRED"
+
+
+class ReviewStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+# Bạn bị thiếu cái này, mà Organization đang dùng → PHẢI có
+class OrganizationStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+    TRIAL = "TRIAL"
+    EXPIRED = "EXPIRED"

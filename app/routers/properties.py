@@ -44,7 +44,7 @@ def list_bookings(
     booking.
     """
     query = select(Booking)
-    if current.role not in (UserRole.ADMIN, UserRole.STAFF):
+    if current.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.STAFF):
         query = query.where(Booking.user_id == current.id)
     if status_filter:
         query = query.where(Booking.status == status_filter)
@@ -62,7 +62,11 @@ def get_booking(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     # Chỉ cho phép chủ sở hữu hoặc admin/staff truy cập
-    if booking.user_id != current.id and current.role not in (UserRole.ADMIN, UserRole.STAFF):
+    if booking.user_id != current.id and current.role not in (
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+        UserRole.STAFF,
+    ):
         raise HTTPException(status_code=403, detail="Not authorized to view this booking")
     return booking
 
@@ -113,7 +117,11 @@ def update_booking(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     # Chỉ chủ sở hữu hoặc admin/staff được cập nhật
-    if booking.user_id != current.id and current.role not in (UserRole.ADMIN, UserRole.STAFF):
+    if booking.user_id != current.id and current.role not in (
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+        UserRole.STAFF,
+    ):
         raise HTTPException(status_code=403, detail="Not authorized to update this booking")
 
     data = payload.model_dump(exclude_unset=True)
@@ -168,7 +176,11 @@ def cancel_booking(
     booking = session.get(Booking, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
-    if booking.user_id != current.id and current.role not in (UserRole.ADMIN, UserRole.STAFF):
+    if booking.user_id != current.id and current.role not in (
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+        UserRole.STAFF,
+    ):
         raise HTTPException(status_code=403, detail="Not authorized to cancel this booking")
     booking.status = BookingStatus.CANCELLED
     session.add(booking)

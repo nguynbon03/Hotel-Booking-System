@@ -7,10 +7,18 @@ registered with SQLModel's metadata when the application starts.
 
 # Core models
 from .user import User
-from .organization import Organization, OrganizationMember, OrganizationInvitation
+from .organization import (
+    Organization,
+    OrganizationMember,
+    OrganizationInvitation,
+    SubscriptionPlan,
+    OrganizationStatus,
+    OrganizationRole,
+    InvitationStatus,
+)
 
 # Property and booking models
-from .property import Property
+from .property import Property, PropertyImage
 from .room_type import RoomType
 from .room import Room
 from .rate_plan import RatePlan
@@ -19,14 +27,17 @@ from .booking import Booking
 from .inventory import Inventory
 
 # Property extras
-from .property_image import PropertyImage
 from .experience import Experience
 
 # Payment and subscription
 from .payment import Payment
 from .subscription import (
-    Subscription, SubscriptionStatus, SubscriptionPlan, 
-    BillingCycle, Invoice, InvoiceStatus, InvoiceLineItem
+    Subscription,
+    SubscriptionStatus,
+    BillingCycle,
+    Invoice,
+    InvoiceStatus,
+    InvoiceLineItem,
 )
 
 # Communication
@@ -41,8 +52,12 @@ __all__ = [
     # Core models
     "User",
     "Organization",
-    "OrganizationMember", 
+    "OrganizationMember",
     "OrganizationInvitation",
+    "SubscriptionPlan",
+    "OrganizationStatus",
+    "OrganizationRole",
+    "InvitationStatus",
     
     # Property and booking models
     "Property",
@@ -60,8 +75,7 @@ __all__ = [
     # Payment and subscription
     "Payment",
     "Subscription",
-    "SubscriptionStatus", 
-    "SubscriptionPlan",
+    "SubscriptionStatus",
     "BillingCycle",
     "Invoice",
     "InvoiceStatus",

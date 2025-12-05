@@ -20,7 +20,7 @@ from app.models.chat_message import ChatMessage
 from app.models.user import User
 from app.models.booking import Booking
 from app.models.property import Property
-from app.schemas.chat import ChatMessageCreate, ChatMessageOut, ChatRoomOut
+from app.schemas.chat_message import ChatMessageCreate, ChatMessageOut, ChatRoomOut
 from app.utils.dependencies import get_active_user, get_current_user_optional
 from app.utils.enums import UserRole
 
@@ -49,7 +49,7 @@ class ChatService:
         return self.session.exec(
             select(User).where(
                 and_(
-                    User.role.in_([UserRole.STAFF, UserRole.ADMIN]),
+                    User.role.in_([UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN]),
                     User.is_active == True
                 )
             )
@@ -240,7 +240,7 @@ def get_user_chat_rooms(
     current_user: User = Depends(get_active_user)
 ):
     """Get all chat rooms for the current user."""
-    if current_user.role in [UserRole.STAFF, UserRole.ADMIN]:
+    if current_user.role in [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN]:
         # Staff can see all active rooms
         rooms_query = select(ChatMessage.room).distinct()
     else:
